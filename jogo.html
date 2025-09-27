@@ -4,12 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jogo da Memória</title>
+    
+    <!-- Arquivo de estilos principal do jogo -->
     <link rel="stylesheet" href="game.css">
+
+    <!-- Fontes Google para títulos e textos -->
     <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- ---------------------------------------------
+         Botão de alto contraste
+         Fica fixo no canto superior direito da tela
+         O emoji 👁️ indica que é para melhorar a visualização
+    --------------------------------------------- -->
+    <button id="contrastToggle" class="contrast-btn">👁️</button>
+
+    <!-- ---------------------------------------------
+         Título do jogo
+    --------------------------------------------- -->
     <h1>JOGO DA MEMÓRIA</h1>
     
+    <!-- ---------------------------------------------
+         Card de informações dos jogadores
+         Mostra os nomes, pontuação e vez do jogador
+         Inicialmente escondido até o jogo começar
+    --------------------------------------------- -->
+    <div id="playersCard" class="info-card hidden-game-element">
+        <p><span id="p1Name"></span>: <span id="p1Score">0</span></p>
+        <p><span id="p2Name"></span>: <span id="p2Score">0</span></p>
+        <p>Vez de: <span id="currentTurn"></span></p>
+    </div>
+
+    <!-- ---------------------------------------------
+         Card de escolha de dificuldade
+         Permite ao usuário selecionar entre fácil, médio ou difícil
+    --------------------------------------------- -->
     <div id="difficultyCard" class="info-card pre-game-card">
         <p>Selecione a Dificuldade</p>
         <div id="difficultyButtons">
@@ -19,20 +48,62 @@
         </div>
     </div>
     
+    <!-- ---------------------------------------------
+         Grid do jogo
+         Contém todas as cartas do jogo
+         Inicialmente escondido até o usuário escolher a dificuldade
+    --------------------------------------------- -->
     <section id="grid" class="hidden-game-element"></section>
 
+    <!-- ---------------------------------------------
+         Temporizador do jogo
+         Mostra o tempo decorrido desde o início do jogo
+    --------------------------------------------- -->
     <div id="timerCard" class="info-card hidden-game-element">
         <span id="timeDisplay">00:00</span>
     </div>
 
+    <!-- ---------------------------------------------
+         Modal de fim de jogo
+         Aparece quando todas as cartas são combinadas
+         Mostra quem venceu, o tempo total e o número de movimentos
+    --------------------------------------------- -->
     <div id="gameOverModal" class="modal">
         <div class="modal-content">
-            <h2>Parabéns!</h2>
-            <p id="gameOverMessage">Você encontrou todos os pares!</p>
+            <h2>Fim de Jogo!</h2>
+            <p id="gameOverMessage"></p>
             <button id="restartButton">Jogar Novamente</button>
         </div>
     </div>
 
+    <!-- ---------------------------------------------
+         Script principal do jogo
+         Contém toda a lógica do jogo: virar cartas,
+         comparar pares, atualizar placar e gerenciar timer
+    --------------------------------------------- -->
     <script src="jogo.js"></script>
+
+    <!-- ---------------------------------------------
+         Script para controle do alto contraste
+         - Aplica preferência salva em localStorage
+         - Permite alternar o contraste clicando no botão 👁️
+    --------------------------------------------- -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const contrastBtn = document.getElementById('contrastToggle');
+
+            // Verifica se o usuário já ativou o modo alto contraste anteriormente
+            if (localStorage.getItem('highContrast') === 'true') {
+                document.body.classList.add('high-contrast');
+            }
+
+            // Alterna o modo alto contraste ao clicar no botão
+            contrastBtn.addEventListener('click', () => {
+                document.body.classList.toggle('high-contrast');
+                // Salva a preferência do usuário para próximas visitas
+                localStorage.setItem('highContrast', document.body.classList.contains('high-contrast'));
+            });
+        });
+    </script>
 </body>
 </html>
