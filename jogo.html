@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Memória</title>
+    <link rel="stylesheet" href="game.css">
+    <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <h1>JOGO DA MEMÓRIA</h1>
+    
+    <div id="difficultyCard" class="info-card pre-game-card">
+        <p>Selecione a Dificuldade</p>
+        <div id="difficultyButtons">
+            <button data-size="4" class="btn-difficulty">Fácil (4x2)</button>
+            <button data-size="6" class="btn-difficulty">Médio (4x3)</button>
+            <button data-size="8" class="btn-difficulty">Difícil (4x4)</button>
+        </div>
+    </div>
+    
+    <section id="grid" class="hidden-game-element"></section>
+
+    <div id="timerCard" class="info-card hidden-game-element">
+        <span id="timeDisplay">00:00</span>
+    </div>
+
+    <div id="gameOverModal" class="modal">
+        <div class="modal-content">
+            <h2>Parabéns!</h2>
+            <p id="gameOverMessage">Você encontrou todos os pares!</p>
+            <button id="restartButton">Jogar Novamente</button>
+        </div>
+    </div>
+
+    <script src="jogo.js"></script>
+</body>
+</html>
