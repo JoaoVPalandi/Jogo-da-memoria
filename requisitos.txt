@@ -1,0 +1,31 @@
+Recursos funcionais (o que o jogo faz)
+
+Mostrar tela inicial (login/início).
+
+Criar o tabuleiro com cartas embaralhadas.
+
+Permitir virar cartas ao clicar.
+
+Verificar se as duas cartas viradas são iguais.
+
+Manter par correto virado e esconder se for errado.
+
+Contar tentativas ou jogadas.
+
+Detectar quando o jogo termina (todos os pares).
+
+Mostrar mensagem de vitória e opção de jogar de novo.
+
+Recursos não funcionais (como o jogo deve ser)
+
+Rodar rápido e sem travar.
+
+Ser fácil de usar e entender.
+
+Ter interface simples e responsiva.
+
+Ser compatível com navegadores comuns.
+
+Código organizado e separado (HTML, CSS, JS).
+
+Ter feedback visual (cartas virando, mensagens).
