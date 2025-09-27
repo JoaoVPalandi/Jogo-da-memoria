@@ -1,38 +1,64 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const grid = document.getElementById('grid');
-    const gameOverModal = document.getElementById('gameOverModal');
-    const gameOverMessage = document.getElementById('gameOverMessage');
-    const restartButton = document.getElementById('restartButton');
-    
-    // NOVOS ELEMENTOS para Dificuldade e Elementos de Jogo
-    const difficultyCard = document.getElementById('difficultyCard');
-    const difficultyButtons = document.getElementById('difficultyButtons');
-    const gameElements = [grid, document.getElementById('timerCard')]; // Elementos para mostrar/esconder
+// jogo.js - arquivo completo e comentado para fins acadêmicos
 
-    const timeDisplay = document.getElementById('timeDisplay'); 
-    let startTime;
-    let timerInterval;
-    let elapsedTime = 0;
+// Garante que todo o DOM esteja carregado antes de executar o script
+document.addEventListener('DOMContentLoaded', () => {
+    // Seleção dos elementos principais do DOM
+    const grid = document.getElementById('grid'); // tabuleiro do jogo
+    const gameOverModal = document.getElementById('gameOverModal'); // modal de fim de jogo
+    const gameOverMessage = document.getElementById('gameOverMessage'); // mensagem dentro do modal
+    const restartButton = document.getElementById('restartButton'); // botão de reiniciar o jogo
     
-    // Configurações de Dificuldade
-    // Usaremos 12 emojis (6 pares) e pegaremos as fatias necessárias para cada nível
+    const difficultyCard = document.getElementById('difficultyCard'); // card para selecionar dificuldade
+    const difficultyButtons = document.getElementById('difficultyButtons'); // container dos botões de dificuldade
+    const gameElements = [grid, document.getElementById('timerCard'), document.getElementById('playersCard')]; 
+    // elementos do jogo que ficam ocultos até a escolha da dificuldade
+
+    const timeDisplay = document.getElementById('timeDisplay'); // display do tempo decorrido
+    
+    // --- Players ---
+    const p1NameEl = document.getElementById("p1Name"); // elemento que mostra o nome do jogador 1
+    const p2NameEl = document.getElementById("p2Name"); // elemento que mostra o nome do jogador 2
+    const p1ScoreEl = document.getElementById("p1Score"); // elemento que mostra a pontuação do jogador 1
+    const p2ScoreEl = document.getElementById("p2Score"); // elemento que mostra a pontuação do jogador 2
+    const currentTurnEl = document.getElementById("currentTurn"); // elemento que mostra o jogador da vez
+
+    // Recupera nomes salvos no localStorage ou usa nomes padrões
+    const player1 = localStorage.getItem("player1") || "Player 1";
+    const player2 = localStorage.getItem("player2") || "Player 2";
+    
+    let p1Score = 0; // pontuação inicial do jogador 1
+    let p2Score = 0; // pontuação inicial do jogador 2
+    let currentPlayer = 1; // 1 = jogador 1, 2 = jogador 2
+
+    // Atualiza elementos do DOM com os nomes e jogador atual
+    p1NameEl.textContent = player1;
+    p2NameEl.textContent = player2;
+    currentTurnEl.textContent = player1;
+
+    // --- Variáveis do jogo ---
+    let startTime; // timestamp do início do jogo
+    let timerInterval; // referência do setInterval do temporizador
+    let elapsedTime = 0; // tempo decorrido em milissegundos
+
+    // Emojis disponíveis para as cartas
     const availableEmojis = ['🐶', '🐱', '🐭', '🐰', '🦊', '🐼', '🐸', '🐵', '🐯', '🐻', '🦁', '🐨'];
     
-    let currentDifficultySize = 0; // Número de pares (4, 6 ou 8)
-    let gameCards = []; 
+    let currentDifficultySize = 0; // número de pares baseado na dificuldade
+    let gameCards = []; // array das cartas do jogo
 
-    let hasFlippedCard = false;
-    let lockBoard = false;
-    let firstCard, secondCard;
-    let matchedPairs = 0;
-    let totalMoves = 0; 
+    // Variáveis para controle de virada das cartas
+    let hasFlippedCard = false; 
+    let lockBoard = false; // impede ações enquanto duas cartas estão viradas
+    let firstCard = null, secondCard = null; // referência das cartas viradas
+    let matchedPairs = 0; // número de pares encontrados
+    let totalMoves = 0; // contador de movimentos feitos
 
-    // --- Funções do Temporizador (Mantidas) ---
-
+    // --- Temporizador ---
     function startTimer() {
-        if (timerInterval) return; 
-        startTime = Date.now() - elapsedTime; 
+        if (timerInterval) return; // evita múltiplos timers
+        startTime = Date.now() - elapsedTime; // calcula tempo inicial considerando tempo decorrido
         
+        // Atualiza display a cada segundo
         timerInterval = setInterval(() => {
             elapsedTime = Date.now() - startTime;
             updateTimeDisplay();
@@ -40,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function stopTimer() {
-        clearInterval(timerInterval);
+        clearInterval(timerInterval); // para o temporizador
         timerInterval = null;
     }
 
@@ -52,55 +78,59 @@ document.addEventListener('DOMContentLoaded', () => {
         const formattedTime = 
             `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         
-        timeDisplay.textContent = formattedTime;
+        timeDisplay.textContent = formattedTime; // atualiza DOM com tempo formatado
     }
 
-    // --- Funções de Início/Controle de Dificuldade ---
-
+    // --- Configuração da dificuldade ---
     function setupGame(event) {
-        // Pega o tamanho da dificuldade do atributo data-size do botão
-        const size = parseInt(event.target.dataset.size);
-        if (isNaN(size)) return; // Sai se não for um botão de dificuldade
+        const btn = event.target;
+        const size = parseInt(btn.dataset.size); // recupera tamanho do botão
+        if (isNaN(size)) return; 
 
-        currentDifficultySize = size;
+        currentDifficultySize = size; // salva dificuldade escolhida
         
-        // Esconde o menu de dificuldade e mostra o grid/timer
-        difficultyCard.style.display = 'none';
-        gameElements.forEach(el => el.classList.remove('hidden-game-element'));
+        difficultyCard.style.display = 'none'; // esconde escolha de dificuldade
+        gameElements.forEach(el => el.classList.remove('hidden-game-element')); // mostra elementos do jogo
         
-        // Define a classe de CSS para o tamanho correto do grid
-        grid.className = ''; // Limpa classes antigas
-        grid.classList.add('size-4x' + (size / 2)); // Ex: size-4x2, size-4x3, size-4x4
+        grid.className = ''; 
+        grid.classList.add('size-4x' + (size / 2)); // aplica classe CSS de acordo com dificuldade
 
-        initializeGame();
+        initializeGame(); // inicia o jogo
     }
 
     function initializeGame() {
-        grid.innerHTML = '';
+        grid.innerHTML = ''; // limpa o grid
         matchedPairs = 0;
         totalMoves = 0;
         hasFlippedCard = false;
         lockBoard = false;
         firstCard = null;
         secondCard = null;
-        gameOverModal.style.display = 'none';
+        gameOverModal.style.display = 'none'; // esconde modal
 
-        // Reseta o temporizador
+        // reset placar e turno
+        p1Score = 0;
+        p2Score = 0;
+        p1ScoreEl.textContent = 0;
+        p2ScoreEl.textContent = 0;
+        currentPlayer = 1;
+        currentTurnEl.textContent = player1;
+
+        // reset timer
         stopTimer();
         elapsedTime = 0;
         timeDisplay.textContent = '00:00'; 
         
-        // Seleciona apenas os emojis necessários para a dificuldade
+        // selecionar emojis para a dificuldade escolhida
         const selectedEmojis = availableEmojis.slice(0, currentDifficultySize);
-        gameCards = [...selectedEmojis, ...selectedEmojis];
+        gameCards = [...selectedEmojis, ...selectedEmojis]; // duplica emojis para criar pares
         
-        shuffleCards(); 
-        createBoard(); 
+        shuffleCards(); // embaralha cartas
+        createBoard(); // cria o tabuleiro
     }
-    
-    // O jogo só começa de fato após selecionar a dificuldade
 
     function shuffleCards() {
+        // Algoritmo de Fisher-Yates para embaralhar o array de cartas
         for (let i = gameCards.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [gameCards[i], gameCards[j]] = [gameCards[j], gameCards[i]]; 
@@ -108,10 +138,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createBoard() {
+        // Cria elementos DOM para cada carta
         gameCards.forEach((emoji) => {
             const card = document.createElement('div');
             card.classList.add('cartas');
-            card.dataset.emoji = emoji; 
+            card.dataset.emoji = emoji; // guarda valor do emoji
 
             card.innerHTML = `
                 <div class="card-inner">
@@ -121,97 +152,128 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="card-face card-front">${emoji}</div>
                 </div>
             `;
-            card.addEventListener('click', flipCard); 
+            card.addEventListener('click', flipCard); // adiciona evento de clique
             grid.appendChild(card);
         });
     }
 
-    // --- Lógica do Jogo (Mantida) ---
-
+    // --- Lógica do jogo ---
     function flipCard() {
-        if (lockBoard) return; 
-        if (this === firstCard) return; 
+        if (lockBoard) return; // bloqueio de ações
+        if (this === firstCard) return; // não permitir clicar na mesma carta
+        if (this.classList.contains('flipped') || this.classList.contains('matched')) return; // já virada ou combinada
 
-        // Inicia o timer SOMENTE no primeiro clique do jogo
-        if (totalMoves === 0 && !hasFlippedCard) {
+        // inicia o timer no primeiro movimento
+        if (!timerInterval && totalMoves === 0 && matchedPairs === 0) {
             startTimer();
         }
 
-        this.classList.add('flipped'); 
+        this.classList.add('flipped'); // vira a carta
 
         if (!hasFlippedCard) {
+            // primeira carta virada
             hasFlippedCard = true;
             firstCard = this;
             return;
         }
 
+        // segunda carta virada
         secondCard = this;
-        totalMoves++; 
-        checkForMatch(); 
+        totalMoves++;
+        checkForMatch(); // verifica se as cartas combinam
     }
 
     function checkForMatch() {
-        let isMatch = firstCard.dataset.emoji === secondCard.dataset.emoji;
+        const isMatch = firstCard.dataset.emoji === secondCard.dataset.emoji;
 
-        isMatch ? disableCards() : unflipCards();
+        if (isMatch) {
+            handleMatch(); // acerto
+        } else {
+            handleMismatch(); // erro
+        }
     }
 
-    function disableCards() {
+    function handleMatch() {
+        // remove possibilidade de clique
         firstCard.removeEventListener('click', flipCard);
         secondCard.removeEventListener('click', flipCard);
-        
+
         firstCard.classList.add('matched');
         secondCard.classList.add('matched');
 
-        matchedPairs++;
-        resetBoard(); 
-        checkGameOver(); 
+        matchedPairs++; // incrementa pares encontrados
+
+        // atualiza placar do jogador da vez
+        if (currentPlayer === 1) {
+            p1Score++;
+            p1ScoreEl.textContent = p1Score;
+        } else {
+            p2Score++;
+            p2ScoreEl.textContent = p2Score;
+        }
+
+        resetBoard(); // reseta estado temporário
+        checkGameOver(); // verifica fim do jogo
     }
 
-    function unflipCards() {
-        lockBoard = true; 
+    function handleMismatch() {
+        lockBoard = true; // bloqueia ações enquanto cartas são viradas de volta
 
         setTimeout(() => {
-            firstCard.classList.remove('flipped'); 
-            secondCard.classList.remove('flipped'); 
+            firstCard.classList.remove('flipped');
+            secondCard.classList.remove('flipped');
 
-            resetBoard(); 
-        }, 1200); 
+            // alterna turno
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            currentTurnEl.textContent = currentPlayer === 1 ? player1 : player2;
+
+            resetBoard();
+        }, 1000);
     }
 
     function resetBoard() {
-        [hasFlippedCard, lockBoard] = [false, false]; 
-        [firstCard, secondCard] = [null, null]; 
+        // reset temporário para próxima jogada
+        hasFlippedCard = false;
+        lockBoard = false;
+        firstCard = null;
+        secondCard = null;
     }
 
     function checkGameOver() {
-        if (matchedPairs === currentDifficultySize) { // Usa a variável da dificuldade atual
-            stopTimer(); 
-            showGameOverModal();
+        if (matchedPairs === currentDifficultySize) {
+            stopTimer(); // para o timer
+            showGameOverModal(); // mostra modal de fim de jogo
         }
     }
 
     function showGameOverModal() {
-        const finalTime = timeDisplay.textContent; 
-        gameOverMessage.textContent = 
-            `Você encontrou todos os ${currentDifficultySize} pares em ${totalMoves} movimentos e levou ${finalTime}! 🎉`;
-        gameOverModal.style.display = 'flex'; 
+        const finalTime = timeDisplay.textContent;
+        let winnerMsg;
+        if (p1Score > p2Score) {
+            winnerMsg = `${player1} venceu com ${p1Score} pontos! 🏆`;
+        } else if (p2Score > p1Score) {
+            winnerMsg = `${player2} venceu com ${p2Score} pontos! 🏆`;
+        } else {
+            winnerMsg = `Empate! Ambos fizeram ${p1Score} pontos 🤝`;
+        }
+
+        // atualiza conteúdo do modal
+        gameOverMessage.textContent = `${winnerMsg} — Tempo: ${finalTime} — Movimentos: ${totalMoves}`;
+        gameOverModal.style.display = 'flex'; // exibe modal
     }
 
     // --- Event Listeners ---
-    
-    // Adiciona listener para os botões de dificuldade
-    difficultyButtons.addEventListener('click', setupGame); 
-
-    // O botão de reiniciar agora retorna ao menu de dificuldade para nova seleção
-    restartButton.addEventListener('click', () => {
-        gameOverModal.style.display = 'none';
-        gameElements.forEach(el => el.classList.add('hidden-game-element'));
-        difficultyCard.style.display = 'block';
+    // clique em dificuldade
+    difficultyButtons.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-difficulty');
+        if (!btn) return;
+        setupGame({ target: btn }); // inicia jogo com dificuldade escolhida
     });
 
-    // --- Início do Jogo ---
-    
-    // No início, mostramos apenas o card de dificuldade.
-    // O initializeGame real é chamado dentro de setupGame.
+    // reiniciar jogo pelo modal
+    restartButton.addEventListener('click', () => {
+        gameOverModal.style.display = 'none'; // esconde modal
+        gameElements.forEach(el => el.classList.add('hidden-game-element')); // esconde elementos do jogo
+        difficultyCard.style.display = 'block'; // mostra escolha de dificuldade
+    });
 });
